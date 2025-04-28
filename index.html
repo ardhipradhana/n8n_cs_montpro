@@ -2,25 +2,47 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>MontPro Chatbot</title>
+<title>MontPro Floating Chatbot</title>
 <style>
   body {
     font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
     background: #f9f9f9;
+  }
+  #chatButton {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    width: 60px;
+    height: 60px;
+    background: #4CAF50;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    font-size: 30px;
+    color: white;
+    z-index: 999;
   }
   #chatContainer {
+    position: fixed;
+    bottom: 100px;
+    right: 25px;
     width: 350px;
     height: 500px;
     background: white;
     border-radius: 15px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    display: none;
+    z-index: 998;
   }
   #chatbox {
     flex: 1;
@@ -77,6 +99,8 @@
 </head>
 <body>
 
+<button id="chatButton">💬</button>
+
 <div id="chatContainer">
   <div id="chatbox"></div>
   <div id="inputArea">
@@ -88,9 +112,19 @@
 <script>
 const webhookUrl = "https://montpro.app.n8n.cloud/webhook/4f55ed0c-cd6d-4bae-8c05-01cdf53ca7f0/chat"; // <-- Replace this
 
+const chatButton = document.getElementById('chatButton');
+const chatContainer = document.getElementById('chatContainer');
 const chatbox = document.getElementById('chatbox');
 const userInput = document.getElementById('userInput');
 const sendButton = document.getElementById('sendButton');
+
+chatButton.addEventListener('click', () => {
+  if (chatContainer.style.display === "none" || chatContainer.style.display === "") {
+    chatContainer.style.display = "flex";
+  } else {
+    chatContainer.style.display = "none";
+  }
+});
 
 sendButton.addEventListener('click', sendMessage);
 userInput.addEventListener('keypress', function (e) {
