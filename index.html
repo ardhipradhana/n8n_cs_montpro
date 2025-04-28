@@ -4,19 +4,19 @@
 <meta charset="UTF-8">
 <title>MontPro Floating Chatbot</title>
 <style>
-  body {
-    font-family: 'Arial', sans-serif;
+  html, body {
     margin: 0;
     padding: 0;
-    height: 100vh;
-    background: #f9f9f9;
+    height: 100%;
+    background: transparent; /* Transparent background for Notion */
+    overflow: hidden;
   }
   #chatButton {
     position: fixed;
-    bottom: 25px;
-    right: 25px;
-    width: 60px;
-    height: 60px;
+    bottom: 20px;
+    right: 20px;
+    width: 65px;
+    height: 65px;
     background: #4CAF50;
     border: none;
     border-radius: 50%;
@@ -32,16 +32,15 @@
   #chatContainer {
     position: fixed;
     bottom: 100px;
-    right: 25px;
+    right: 20px;
     width: 350px;
     height: 500px;
     background: white;
     border-radius: 15px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    display: flex;
+    display: none;
     flex-direction: column;
     overflow: hidden;
-    display: none;
     z-index: 998;
   }
   #chatbox {
@@ -90,10 +89,40 @@
     cursor: pointer;
   }
   .typing {
-    font-style: italic;
-    font-size: 12px;
-    color: #999;
+    display: flex;
+    align-items: center;
+    gap: 4px;
     margin-top: 5px;
+  }
+  .dot {
+    height: 8px;
+    width: 8px;
+    background-color: #999;
+    border-radius: 50%;
+    animation: bounce 1.4s infinite;
+  }
+  .dot:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  .dot:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+  @keyframes bounce {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1); }
+  }
+  #welcomePopup {
+    position: fixed;
+    bottom: 95px;
+    right: 95px;
+    background: #4CAF50;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 20px;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    z-index: 997;
   }
 </style>
 </head>
@@ -104,26 +133,40 @@
 <div id="chatContainer">
   <div id="chatbox"></div>
   <div id="inputArea">
-    <input type="text" id="userInput" placeholder="Type a message..." />
+    <input type="text" id="userInput" placeholder="Ask me anything..." />
     <button id="sendButton">Send</button>
   </div>
 </div>
 
+<div id="welcomePopup">👋 Need help?</div>
+
+<!-- Hidden audio for ding sound -->
+<audio id="dingSound" src="https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3" preload="auto"></audio>
+
 <script>
-const webhookUrl = "https://montpro.app.n8n.cloud/webhook/4f55ed0c-cd6d-4bae-8c05-01cdf53ca7f0/chat"; // <-- Replace this
+const webhookUrl = "https://montpro.app.n8n.cloud/webhook/4f55ed0c-cd6d-4bae-8c05-01cdf53ca7f0/chat"; // <-- Replace this with your real n8n webhook
 
 const chatButton = document.getElementById('chatButton');
 const chatContainer = document.getElementById('chatContainer');
 const chatbox = document.getElementById('chatbox');
 const userInput = document.getElementById('userInput');
 const sendButton = document.getElementById('sendButton');
+const welcomePopup = document.getElementById('welcomePopup');
+const dingSound = document.getElementById('dingSound');
 
+// Show welcome popup after 2 seconds
+setTimeout(() => {
+  welcomePopup.style.opacity = '1';
+}, 2000);
+
+// Hide welcome popup when chat opens
 chatButton.addEventListener('click', () => {
   if (chatContainer.style.display === "none" || chatContainer.style.display === "") {
     chatContainer.style.display = "flex";
   } else {
     chatContainer.style.display = "none";
   }
+  welcomePopup.style.opacity = '0';
 });
 
 sendButton.addEventListener('click', sendMessage);
@@ -148,10 +191,14 @@ async function sendMessage() {
   appendMessage('user', message);
   userInput.value = '';
 
-  // Show typing animation
+  // Show typing animation with bouncing dots
   const typingDiv = document.createElement('div');
   typingDiv.className = 'typing';
-  typingDiv.innerText = 'Bot is typing...';
+  typingDiv.innerHTML = `
+    <span class="dot"></span>
+    <span class="dot"></span>
+    <span class="dot"></span>
+  `;
   chatbox.appendChild(typingDiv);
   chatbox.scrollTop = chatbox.scrollHeight;
 
@@ -162,9 +209,12 @@ async function sendMessage() {
       body: JSON.stringify({ message: message })
     });
     const data = await response.json();
-    
+
     // Remove typing animation
     chatbox.removeChild(typingDiv);
+
+    // Play ding sound when bot replies
+    dingSound.play();
 
     appendMessage('bot', data.reply || "Sorry, I didn't understand that.");
   } catch (error) {
