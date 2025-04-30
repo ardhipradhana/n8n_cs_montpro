@@ -150,6 +150,20 @@
 
 <script>
 const webhookUrl = "https://montpro.app.n8n.cloud/webhook/4f55ed0c-cd6d-4bae-8c05-01cdf53ca7f0/chat"; // <-- Replace this with your real n8n webhook
+  // Generate unique session ID and store it
+let sessionId = localStorage.getItem('chat_session_id');
+if (!sessionId) {
+  sessionId = Math.random().toString(36).substring(2);
+  localStorage.setItem('chat_session_id', sessionId);
+}
+
+// Ask for user name once
+let userName = localStorage.getItem('chat_user_name');
+if (!userName) {
+  userName = prompt("👋 Hi there! What's your name?");
+  if (!userName) userName = "Anonymous";
+  localStorage.setItem('chat_user_name', userName);
+}
 
 const chatButton = document.getElementById('chatButton');
 const chatContainer = document.getElementById('chatContainer');
@@ -211,7 +225,12 @@ async function sendMessage() {
     const response = await fetch(webhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: message })
+      body: JSON.stringify({
+        sessionId: sessionId,
+        name: userName,
+        message: message
+      })
+
     });
     const data = await response.json();
 
